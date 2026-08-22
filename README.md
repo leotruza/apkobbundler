@@ -1,5 +1,9 @@
 # REapk OBB Builder
 
+> **AI Authorship Disclaimer (English):** This project was created completely by an artificial intelligence agent. Human review, testing, and independent validation are recommended before using it in production or with software for which you do not have authorization.
+>
+> **Disclaimer de autoria por IA (Português):** Este projeto foi criado completamente por um agente de inteligência artificial. Recomenda-se revisão humana, testes e validação independente antes de utilizá-lo em produção ou com software para o qual você não tenha autorização.
+
 ## Resultado da inspeção
 
 O repositório `JRBusiness/REapk`, tag `v0.1.1` (`8dafd5a`), foi inspecionado antes da implementação. A API real confirma leitura de manifesto, leitura de DEX, substituição de corpos de métodos, reconstrução ZIP alinhada e assinatura nativa. Ela **não confirma uma API para declarar uma nova classe/método nem para atualizar `class_data` com um novo método de inicialização**.
