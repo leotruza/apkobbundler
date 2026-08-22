@@ -1,0 +1,196 @@
+.\" vim: ft=nroff
+.TH APKOBBUNDLER 1 "August 2026" "apkobbundler" "User Commands"
+.SH NAME
+apkobbundler \- inspect and package a Unity OBB with an APK using REapk
+.SH SYNOPSIS
+.B python build.py
+.RI [ options ]
+.I input
+.PP
+.B python build.py
+.I input
+.BR --obb
+.I obb
+.BR --no-inject
+.SH DESCRIPTION
+.B apkobbundler
+is the command-line program implemented by
+.BR build.py
+for inspecting an APK or XAPK/APKS bundle, locating a matching Unity expansion
+file (OBB), and packaging that file into the APK using the native Python APIs
+provided by REapk 0.1.1.
+.PP
+The program reads the package name and versionCode from the binary Android
+manifest. It accepts OBB files named
+.BI main.<versionCode>.<package>.obb
+or
+.BI patch.<versionCode>.<package>.obb .
+When packaging is explicitly enabled, the OBB is stored as
+.B assets/obb/<obb-filename>
+and the resulting ZIP is rebuilt and signed with REapk's native APK Signature
+Scheme v2+v3 implementation.
+.PP
+By default, the program refuses to produce an output APK after inspection.
+This is intentional: REapk 0.1.1 can replace the body of an existing DEX
+method, but does not expose a supported operation for declaring a new startup
+class or method and updating DEX class_data. Therefore the current program
+cannot safely inject the startup extraction hook required for a genuinely
+standalone APK.
+.PP
+The
+.B --no-inject
+option enables the packaging step for testing or inspection only. Its output
+is explicitly not standalone and does not extract the embedded OBB to the
+Android expansion-file directory at application startup.
+.SH OPTIONS
+.TP
+.BI --obb \,path
+Use the specified OBB instead of searching OBB members in an XAPK/APKS/ZIP
+bundle. The basename must match the standard naming convention and must match
+the APK package and versionCode.
+.TP
+.B --no-inject
+Emit an APK containing the OBB asset without startup DEX injection. This
+option is required to produce an output with the current implementation and
+must not be interpreted as enabling automatic OBB extraction.
+.TP
+.BI --output \,path
+Write the output APK to
+.I path .
+If omitted, use
+.B output/<input-stem>-standalone.apk .
+.TP
+.BR -h , \--help
+Show the command-line help and exit.
+.SH INPUT HANDLING
+For an ordinary
+.BR .apk ,
+the file itself is treated as the base APK and the OBB must be supplied with
+.B --obb.
+.PP
+For
+.BR .xapk ,
+.BR .apks ,
+and ZIP bundles, the program reads
+.B manifest.json
+when present, locates APK and OBB members, and selects the base APK. Bundles
+containing multiple APKs that appear to be split, architecture, or
+configuration APKs are rejected because REapk 0.1.1 does not merge splits.
+.PP
+If no explicit OBB is supplied, the program searches bundle members for a
+basename matching
+.BI main.<versionCode>.<package>.obb
+or
+.BI patch.<versionCode>.<package>.obb .
+When both main and patch candidates are present, the main candidate is
+preferred. The filename is validated against the manifest package and
+versionCode, and an empty OBB is rejected.
+.SH OUTPUT
+With
+.B --no-inject ,
+the program writes a newly signed APK. The embedded OBB is stored without
+compression under
+.B assets/obb/ .
+Existing stale JAR-signature metadata under
+.B META-INF/
+is removed before native signing.
+.PP
+The signing key and certificate are generated or reused by REapk under
+.BR ~/.reapk/ .
+Because this is not the original application's signing key, the output is
+intended for clean installation and testing, not for updating an installation
+signed by a different key.
+.SH EXIT STATUS
+.TP
+.B 0
+The requested operation completed. With
+.B --no-inject ,
+this means only that the non-standalone packaging operation succeeded.
+.TP
+.B 2
+Input validation failed, the OBB was not found or did not match, the bundle
+contains unsupported splits, or standalone output was refused because startup
+injection is unavailable.
+.SH EXAMPLES
+Inspect an APK and its separately supplied OBB:
+.PP
+.nf
+python build.py input/game.apk --obb path/to/main.1435.com.example.game.obb
+.fi
+.PP
+Package an XAPK for testing without startup injection:
+.PP
+.nf
+python build.py input/game.xapk --no-inject
+.fi
+.PP
+Write the non-standalone test artifact to a custom path:
+.PP
+.nf
+python build.py input/game.apk \\
+    --obb path/to/main.1435.com.example.game.obb \\
+    --no-inject \\
+    --output output/test.apk
+.fi
+.PP
+Verify that the output is a readable ZIP and contains the embedded OBB:
+.PP
+.nf
+python -m zipfile -t output/test.apk
+python - <<'PY'
+import zipfile
+with zipfile.ZipFile("output/test.apk") as z:
+    print([n for n in z.namelist() if n.startswith("assets/obb/")])
+PY
+.fi
+.SH FILES
+.TP
+.B build.py
+Python implementation of the command.
+.TP
+.B README.md
+Project architecture, REapk API findings, setup instructions, limitations,
+and verification notes.
+.TP
+.B ~/.reapk/signer.key
+Cached private signing key managed by REapk. Protect this file.
+.TP
+.B ~/.reapk/signer.crt
+Cached certificate corresponding to the REapk signing key.
+.SH REQUIREMENTS
+Python 3.10 or newer is recommended. Install REapk 0.1.1 in a virtual
+environment:
+.PP
+.nf
+python3 -m venv venv
+. venv/bin/activate
+python -m pip install 'reapk @ git+https://github.com/JRBusiness/REapk.git@v0.1.1'
+.fi
+.PP
+The program does not require Java, apktool, smali, baksmali, zipalign,
+apksigner, or keytool.
+.SH LIMITATIONS
+The current implementation does not inject code into an Application or launch
+Activity, does not create a new Dalvik helper class, and does not copy an asset
+to
+.B /sdcard/Android/obb/<package>/
+at application startup. Consequently, an output produced with
+.B --no-inject
+is not a standalone APK and must not be represented as one.
+.PP
+The program does not bypass LVL, Google Play licensing, DRM, authentication,
+or signature checks. Use it only with software for which the operator has the
+necessary authorization.
+.SH SEE ALSO
+.BR man (1),
+.BR python (1)
+.PP
+REapk repository: https://github.com/JRBusiness/REapk
+.PP
+Man-page format reference: https://en.wikipedia.org/wiki/Man_page
+.SH AUTHOR
+This project was created completely by an artificial intelligence agent.
+Human review, testing, and independent validation are recommended.
+.SH COPYRIGHT
+Copyright information is not separately specified. See the repository for
+project licensing terms.
