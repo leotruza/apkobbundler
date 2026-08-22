@@ -1,8 +1,11 @@
 # REapk OBB Builder
+EN:
 
-> **AI Authorship Disclaimer (English):** This project was created completely by an artificial intelligence agent. Human review, testing, and independent validation are recommended before using it in production or with software for which you do not have authorization.
->
-> **Disclaimer de autoria por IA (Português):** Este projeto foi criado completamente por um agente de inteligência artificial. Recomenda-se revisão humana, testes e validação independente antes de utilizá-lo em produção ou com software para o qual você não tenha autorização.
+> **AI Authorship Disclaimer:** This project was created completely by an artificial intelligence agent. Human review, testing, and independent validation are recommended before using it in production or with software for which you do not have authorization.
+
+PT_BR:
+
+> **Disclaimer de autoria por IA:** Este projeto foi criado completamente por um agente de inteligência artificial. Recomenda-se revisão humana, testes e validação independente antes de utilizá-lo em produção ou com software para o qual você não tenha autorização.
 
 ## Resultado da inspeção
 
