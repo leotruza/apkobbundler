@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""Inspect and package a Unity OBB with an APK using REapk 0.1.1.
-
-By default this command refuses to emit an APK because REapk 0.1.1 does not
-provide a supported operation for declaring a new Application/Activity hook
-or adding a method/class to class_data. Use --no-inject only for the explicit
-non-standalone packaging operation.
-"""
 from __future__ import annotations
 
 import argparse
